@@ -21,7 +21,10 @@ using comm::ESendResult;
 using comm::SCanFrame;
 using comm::SReceivedFrame;
 
+// Where no frame is expected: keeps those tests fast.
 constexpr core::TDuration kShortTimeout = std::chrono::milliseconds(1);
+// Where a frame is expected: on a real socket it passes through the kernel first.
+constexpr core::TDuration kFrameTimeout = std::chrono::milliseconds(100);
 
 }  // namespace
 
@@ -206,7 +209,7 @@ TEST_P(CCanBusContractTest, ReceivesFrameUnchanged) {
     harness_->deliver(sent);
 
     SReceivedFrame received;
-    ASSERT_EQ(bus().receive(received, kShortTimeout), EReceiveResult::kReceived);
+    ASSERT_EQ(bus().receive(received, kFrameTimeout), EReceiveResult::kReceived);
     EXPECT_TRUE(sameFrame(received.frame, sent));
 }
 
@@ -228,7 +231,7 @@ TEST_P(CCanBusContractTest, DeliversFramesInOrderOfReception) {
     for (const std::uint32_t id : {0x101U, 0x102U, 0x103U}) {
         SCOPED_TRACE(id);
         SReceivedFrame received;
-        ASSERT_EQ(bus().receive(received, kShortTimeout), EReceiveResult::kReceived);
+        ASSERT_EQ(bus().receive(received, kFrameTimeout), EReceiveResult::kReceived);
         EXPECT_EQ(received.frame.id, id);
     }
 }
@@ -241,7 +244,7 @@ TEST_P(CCanBusContractTest, TimestampIsTimeOfReading) {
     const core::TTimePoint readTime = harness_->clock().now();
 
     SReceivedFrame received;
-    ASSERT_EQ(bus().receive(received, kShortTimeout), EReceiveResult::kReceived);
+    ASSERT_EQ(bus().receive(received, kFrameTimeout), EReceiveResult::kReceived);
     EXPECT_EQ(received.timestamp, readTime);
 }
 
@@ -263,7 +266,7 @@ TEST_P(CCanBusContractTest, DoesNotAllocateAfterOpen) {
 
     const std::size_t before = allocationCount();
     const ESendResult sendResult = bus().send(frame);
-    const EReceiveResult firstReceive = bus().receive(received, kShortTimeout);
+    const EReceiveResult firstReceive = bus().receive(received, kFrameTimeout);
     const EReceiveResult secondReceive = bus().receive(received, kShortTimeout);
     const std::uint64_t dropped = bus().droppedFrames();
     const std::size_t after = allocationCount();
