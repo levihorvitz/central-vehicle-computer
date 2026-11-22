@@ -1,0 +1,196 @@
+[DOCUMENT]
+TITLE: Software Requirements - CAN Bus
+
+[GRAMMAR]
+ELEMENTS:
+- TAG: TEXT
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+- TAG: REQUIREMENT
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: STATUS
+    TYPE: SingleChoice(Draft, Reviewed, Approved)
+    REQUIRED: True
+  - TITLE: TAGS
+    TYPE: Tag
+    REQUIRED: False
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+  - TITLE: RATIONALE
+    TYPE: String
+    REQUIRED: False
+  - TITLE: VERIFICATION
+    TYPE: MultipleChoice(Test, Demonstration, Inspection, Analysis)
+    REQUIRED: True
+  RELATIONS:
+  - TYPE: Parent
+  - TYPE: File
+
+[TEXT]
+STATEMENT: >>>
+This document states the software requirements of the CAN bus component, the lowest part of the
+communication layer. It sends and receives CAN frames on a named interface: vcan0 against the
+simulated units in development, and the car's OBD-II port on the target.
+
+Each requirement links to the system requirements it serves with a Parent relation.
+Requirements tagged "derived" have no system-level parent: they come from design decisions
+rather than from a system requirement, and their rationale explains why they exist.
+<<<
+
+[REQUIREMENT]
+UID: SW_CAN_001
+STATUS: Draft
+TAGS: can_bus
+TITLE: Classic CAN frames
+STATEMENT: The bus component shall send and receive classic CAN data frames consisting of an identifier, a data length code (DLC) from 0 to 8, and up to 8 data bytes.
+RATIONALE: The units' status and the vehicle's OBD-II responses arrive as CAN frames. CAN FD is out of scope.
+VERIFICATION: Test
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_MON_001
+- TYPE: Parent
+  VALUE: SYS_VEH_001
+
+[REQUIREMENT]
+UID: SW_CAN_002
+STATUS: Draft
+TAGS: can_bus, derived
+TITLE: Standard identifiers only
+STATEMENT: The bus component shall send and deliver only frames with 11-bit standard identifiers, in the range 0x000 to 0x7FF, and shall not deliver received frames with 29-bit extended identifiers.
+RATIONALE: Derived. The simulated units use standard identifiers, and the target vehicle is assumed to answer OBD-II requests on standard identifiers. The assumption is confirmed on the first connection to the car.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CAN_003
+STATUS: Draft
+TAGS: can_bus
+TITLE: Open by interface name and mode
+STATEMENT: The bus component shall open a connection to a CAN interface given by name, in either simulation mode or real-vehicle mode, and shall report failure if the interface cannot be opened. The mode shall stay fixed until the bus is closed.
+RATIONALE: The same code runs against vcan0 and the car. Fixing the mode while open means the transmit restriction of SW_CAN_009 cannot be switched off at run time.
+VERIFICATION: Test
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_MON_001
+- TYPE: Parent
+  VALUE: SYS_VEH_001
+- TYPE: Parent
+  VALUE: SYS_SAFE_001
+
+[REQUIREMENT]
+UID: SW_CAN_004
+STATUS: Draft
+TAGS: can_bus, derived
+TITLE: Operations on a bus that is not open
+STATEMENT: When the bus component is not open, send and receive requests shall fail without side effects.
+RATIONALE: Derived. Calls made before open or after close must not cause undefined behaviour.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CAN_005
+STATUS: Draft
+TAGS: can_bus, derived
+TITLE: Close
+STATEMENT: The bus component shall release its connection on close. Closing a bus that is not open shall have no effect.
+RATIONALE: Derived. Shutdown must be possible from any state.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CAN_006
+STATUS: Draft
+TAGS: can_bus
+TITLE: Send
+STATEMENT: When open, the bus component shall transmit a frame that meets SW_CAN_007 and SW_CAN_009 and report success, or report failure if the frame was not accepted for transmission.
+RATIONALE: OBD-II requests to the vehicle are sent as frames, and the sender must know whether each one left the component.
+VERIFICATION: Test
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_VEH_001
+- TYPE: Parent
+  VALUE: SYS_VEH_002
+
+[REQUIREMENT]
+UID: SW_CAN_007
+STATUS: Draft
+TAGS: can_bus, derived
+TITLE: Reject invalid frames on send
+STATEMENT: The bus component shall reject, without transmitting, a frame whose DLC exceeds 8 or whose identifier exceeds 0x7FF.
+RATIONALE: Derived. Invalid frames must never reach the bus.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CAN_008
+STATUS: Draft
+TAGS: can_bus, derived
+TITLE: Receive with timeout
+STATEMENT: The bus component shall return the next received frame, or report that no frame arrived, within a timeout given by the caller.
+RATIONALE: Derived. The I/O thread must be able to check for a stop request regularly, without busy-waiting or blocking forever.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CAN_009
+STATUS: Draft
+TAGS: can_bus, safety
+TITLE: Transmit restriction in real-vehicle mode
+STATEMENT: In real-vehicle mode, the bus component shall transmit only frames with identifier 0x7DF or 0x7E0 to 0x7E7, and shall reject any other frame without transmitting it.
+RATIONALE: These are the 11-bit OBD-II request identifiers of ISO 15765-4. Enforcing them in the lowest layer means no fault above it can put another frame on the car's bus. The OBD-II client remains responsible for request content and for the rate limit of SYS_SAFE_002.
+VERIFICATION: Test, Inspection
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_SAFE_001
+
+[REQUIREMENT]
+UID: SW_CAN_010
+STATUS: Draft
+TAGS: can_bus, derived
+TITLE: Receive order
+STATEMENT: The bus component shall deliver received frames in the order in which they were received.
+RATIONALE: Derived. The E2E alive counter check depends on frames arriving in order.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CAN_011
+STATUS: Draft
+TAGS: can_bus, derived
+TITLE: Filter non-data frames
+STATEMENT: The bus component shall not deliver remote frames or error frames to the caller.
+RATIONALE: Derived. Only data frames carry the signals defined in the ICD.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CAN_012
+STATUS: Draft
+TAGS: can_bus, derived
+TITLE: Receive timestamp
+STATEMENT: The bus component shall attach to every delivered frame the time at which it was received, taken from the system's monotonic clock.
+RATIONALE: Derived. Using the same clock as the scheduler lets receive times be compared with cycle times, for example to detect messages that stopped arriving, and lets tests use the fake clock.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CAN_013
+STATUS: Draft
+TAGS: can_bus, derived
+TITLE: Dropped frame count
+STATEMENT: The bus component shall provide the number of frames dropped on the receive path before delivery, counted since it was opened.
+RATIONALE: Derived. Lost frames must be visible, never silent.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CAN_014
+STATUS: Draft
+TAGS: can_bus, derived
+TITLE: No dynamic allocation
+STATEMENT: The bus component shall not allocate memory dynamically after it has been opened.
+RATIONALE: Derived from the project coding rule. Allocation at run time can take unbounded time or fail.
+VERIFICATION: Test, Inspection
