@@ -44,6 +44,9 @@ This document states the software requirements of the CAN bus component, the low
 communication layer. It sends and receives CAN frames on a named interface: vcan0 against the
 simulated units in development, and the car's OBD-II port on the target.
 
+The component does not configure the interface (bitrate, up or down state); the operating system
+does that at installation. Bus-off handling belongs to the hardware stage and is not covered here.
+
 Each requirement links to the system requirements it serves with a Parent relation.
 Requirements tagged "derived" have no system-level parent: they come from design decisions
 rather than from a system requirement, and their rationale explains why they exist.
@@ -77,8 +80,8 @@ UID: SW_CAN_003
 STATUS: Draft
 TAGS: can_bus
 TITLE: Open by interface name and mode
-STATEMENT: The bus component shall open a connection to a CAN interface given by name, in either simulation mode or real-vehicle mode, and shall report failure if the interface cannot be opened. The mode shall stay fixed until the bus is closed.
-RATIONALE: The same code runs against vcan0 and the car. Fixing the mode while open means the transmit restriction of SW_CAN_009 cannot be switched off at run time.
+STATEMENT: The bus component shall open a connection to a CAN interface given by name, in either simulation mode or real-vehicle mode, and shall report failure if the interface cannot be opened. The mode shall stay fixed until the bus is closed. Opening a bus that is already open shall fail without changing its state. A closed bus may be opened again.
+RATIONALE: The same code runs against vcan0 and the car. Fixing the mode while open, and refusing a second open, mean the transmit restriction of SW_CAN_009 cannot be switched off at run time.
 VERIFICATION: Test
 RELATIONS:
 - TYPE: Parent
@@ -111,8 +114,8 @@ UID: SW_CAN_006
 STATUS: Draft
 TAGS: can_bus
 TITLE: Send
-STATEMENT: When open, the bus component shall transmit a frame that meets SW_CAN_007 and SW_CAN_009 and report success, or report failure if the frame was not accepted for transmission.
-RATIONALE: OBD-II requests to the vehicle are sent as frames, and the sender must know whether each one left the component.
+STATEMENT: When open, the bus component shall report success when a frame that meets SW_CAN_007 and SW_CAN_009 has been accepted for transmission by the CAN interface, and report failure otherwise. Success does not mean that the frame was acknowledged on the bus.
+RATIONALE: OBD-II requests to the vehicle are sent as frames, and the sender must know whether each one left the component. Confirmation of transmission on the bus is not needed.
 VERIFICATION: Test
 RELATIONS:
 - TYPE: Parent
@@ -173,7 +176,7 @@ UID: SW_CAN_012
 STATUS: Draft
 TAGS: can_bus, derived
 TITLE: Receive timestamp
-STATEMENT: The bus component shall attach to every delivered frame the time at which it was received, taken from the system's monotonic clock.
+STATEMENT: The bus component shall attach to every delivered frame the time at which the component read it from the CAN interface, taken from the system's monotonic clock.
 RATIONALE: Derived. Using the same clock as the scheduler lets receive times be compared with cycle times, for example to detect messages that stopped arriving, and lets tests use the fake clock.
 VERIFICATION: Test
 
@@ -182,8 +185,8 @@ UID: SW_CAN_013
 STATUS: Draft
 TAGS: can_bus, derived
 TITLE: Dropped frame count
-STATEMENT: The bus component shall provide the number of frames dropped on the receive path before delivery, counted since it was opened.
-RATIONALE: Derived. Lost frames must be visible, never silent.
+STATEMENT: The bus component shall provide the number of frames lost because its receive buffer was full, counted since it was opened. Frames not delivered because of SW_CAN_002 or SW_CAN_011 shall not be counted.
+RATIONALE: Derived. Lost frames must be visible, never silent. Frames filtered on purpose are not losses.
 VERIFICATION: Test
 
 [REQUIREMENT]
@@ -194,3 +197,35 @@ TITLE: No dynamic allocation
 STATEMENT: The bus component shall not allocate memory dynamically after it has been opened.
 RATIONALE: Derived from the project coding rule. Allocation at run time can take unbounded time or fail.
 VERIFICATION: Test, Inspection
+
+[REQUIREMENT]
+UID: SW_CAN_015
+STATUS: Draft
+TAGS: can_bus, derived
+TITLE: Concurrent send and receive
+STATEMENT: The bus component shall support one thread receiving and one other thread sending at the same time.
+RATIONALE: Derived from the architecture: the I/O thread receives while the logic thread sends. Open and close are not called while another thread sends or receives; the I/O thread is stopped before close.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CAN_016
+STATUS: Draft
+TAGS: can_bus
+TITLE: Send does not block
+STATEMENT: The bus component shall return from a send request without waiting. If the frame cannot be accepted for transmission at once, the send shall report failure.
+RATIONALE: The logic thread sends inside the cycle. Waiting for the interface could make the cycle overrun.
+VERIFICATION: Test
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_LIGHT_001
+- TYPE: Parent
+  VALUE: SYS_STATE_003
+
+[REQUIREMENT]
+UID: SW_CAN_017
+STATUS: Draft
+TAGS: can_bus, derived
+TITLE: Interface lost while open
+STATEMENT: If the CAN interface becomes unavailable while the bus is open, send and receive requests shall report failure without blocking beyond the receive timeout, and the bus component shall report that the interface is unavailable.
+RATIONALE: Derived. A lost interface, such as a disconnected CAN adapter, must be visible so that it can be handled as a fault, and must not hang the I/O thread.
+VERIFICATION: Test
