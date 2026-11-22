@@ -1,7 +1,10 @@
 #pragma once
 
+#include <array>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <mutex>
 #include <string_view>
 
 #include "comm/can_bus.hpp"
@@ -35,7 +38,50 @@ public:
     void loseInterface();
 
 private:
+    template <std::size_t Capacity>
+    class CFrameRing {
+    public:
+        [[nodiscard]] bool push(const comm::SCanFrame& frame) {
+            if (count_ == Capacity) {
+                return false;
+            }
+            frames_[(head_ + count_) % Capacity] = frame;
+            ++count_;
+            return true;
+        }
+
+        [[nodiscard]] bool pop(comm::SCanFrame& frame) {
+            if (count_ == 0U) {
+                return false;
+            }
+            frame = frames_[head_];
+            head_ = (head_ + 1U) % Capacity;
+            --count_;
+            return true;
+        }
+
+        void clear() {
+            head_ = 0U;
+            count_ = 0U;
+        }
+
+    private:
+        std::array<comm::SCanFrame, Capacity> frames_{};
+        std::size_t head_ = 0U;
+        std::size_t count_ = 0U;
+    };
+
+    [[nodiscard]] bool popReceived(comm::SReceivedFrame& received);
+    [[nodiscard]] static bool isObdRequestId(std::uint32_t id);
+
     core::IClock& clock_;
+    mutable std::mutex mutex_;
+    bool open_ = false;
+    bool interfaceLost_ = false;
+    comm::EBusMode mode_ = comm::EBusMode::kSimulation;
+    CFrameRing<kReceiveCapacity> received_;
+    CFrameRing<kTransmitCapacity> transmitted_;
+    std::atomic<std::uint64_t> dropped_{0U};
 };
 
 }  // namespace cvc::test
