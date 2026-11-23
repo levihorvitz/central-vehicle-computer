@@ -241,4 +241,14 @@ TEST_F(CSocketCanBusTest, CountsFramesDroppedByAFullReceiveBuffer) {
     EXPECT_TRUE(bus_.droppedFrames() > 0U);
 }
 
+// SW_CAN_017. Manual: bring vcan0 down while this test waits, e.g.
+// (sleep 2 && sudo ip link set vcan0 down) & ./socketcan_tests --gtest_also_run_disabled_tests ...
+TEST_F(CSocketCanBusTest, DISABLED_ReportsInterfaceLostWhenInterfaceGoesDown) {
+    constexpr core::TDuration kManualWindow = std::chrono::seconds(30);
+
+    SReceivedFrame received;
+    EXPECT_EQ(bus_.receive(received, kManualWindow), EReceiveResult::kInterfaceLost);
+    EXPECT_EQ(bus_.send(makeFrame(0x123U)), comm::ESendResult::kInterfaceLost);
+}
+
 }  // namespace cvc::test
