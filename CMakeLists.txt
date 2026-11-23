@@ -39,6 +39,7 @@ add_library(cvc_comm
     src/comm/e2e.cpp
     src/comm/e2e_receiver.cpp
     src/comm/e2e_sender.cpp
+    src/comm/socket_can_bus.cpp
 )
 target_include_directories(cvc_comm PUBLIC include)
 target_link_libraries(cvc_comm PUBLIC cvc_options)

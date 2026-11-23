@@ -34,3 +34,12 @@ add_executable(comm_tests
 target_include_directories(comm_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(comm_tests PRIVATE cvc_comm GTest::gtest_main)
 gtest_discover_tests(comm_tests NO_PRETTY_VALUES)
+
+add_executable(socketcan_tests
+    comm/can_bus_contract_test.cpp
+    comm/socket_can_bus_test.cpp
+    support/allocation_counter.cpp
+)
+target_include_directories(socketcan_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(socketcan_tests PRIVATE cvc_comm GTest::gtest_main)
+gtest_discover_tests(socketcan_tests NO_PRETTY_VALUES PROPERTIES RESOURCE_LOCK vcan0)
