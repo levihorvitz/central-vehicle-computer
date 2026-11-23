@@ -41,8 +41,10 @@ jobs:
       
       - name: Set up vcan0
         run: |
-          sudo apt-get update
-          sudo apt-get install -y linux-modules-extra-$(uname -r)
+          if ! sudo modprobe vcan; then
+            sudo apt-get update
+            sudo apt-get install -y "linux-modules-extra-$(uname -r)"
+          fi
           ./scripts/setup_vcan.sh
 
       - name: Test
