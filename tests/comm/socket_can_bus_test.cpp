@@ -229,7 +229,15 @@ TEST_F(CSocketCanBusTest, CountsFramesDroppedByAFullReceiveBuffer) {
     }
 
     SReceivedFrame received;
+    EReceiveResult result = EReceiveResult::kReceived;
+    while (result == EReceiveResult::kReceived) {
+        result = bus_.receive(received, kFrameTimeout);
+    }
+    ASSERT_EQ(result, EReceiveResult::kTimeout);
+
+    peer_.send(toKernelFrame(makeFrame(0x106U)));
     ASSERT_EQ(bus_.receive(received, kFrameTimeout), EReceiveResult::kReceived);
+    EXPECT_EQ(received.frame.id, 0x106U);
     EXPECT_TRUE(bus_.droppedFrames() > 0U);
 }
 

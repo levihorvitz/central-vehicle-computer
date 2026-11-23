@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <atomic>
 #include <string_view>
 
 #include "comm/can_bus.hpp"
@@ -27,6 +28,9 @@ public:
 
 private:
     core::IClock& clock_;
+    int fd_ = -1;
+    EBusMode mode_ = EBusMode::kSimulation;
+    std::atomic<std::uint64_t> dropped_{0U};
 };
 
 }  // namespace cvc::comm
