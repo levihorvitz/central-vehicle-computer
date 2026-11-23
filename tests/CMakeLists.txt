@@ -27,7 +27,10 @@ add_executable(comm_tests
     comm/e2e_receiver_test.cpp
     comm/e2e_sender_test.cpp
     support/allocation_counter.cpp
+    comm/can_bus_contract_test.cpp
+    comm/fake_can_bus_test.cpp
+    fakes/fake_can_bus.cpp
 )
 target_include_directories(comm_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(comm_tests PRIVATE cvc_comm GTest::gtest_main)
-gtest_discover_tests(comm_tests)
+gtest_discover_tests(comm_tests NO_PRETTY_VALUES)
