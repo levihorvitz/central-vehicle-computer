@@ -38,6 +38,12 @@ jobs:
 
       - name: Build
         run: cmake --build build -j
+      
+      - name: Set up vcan0
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y linux-modules-extra-$(uname -r)
+          ./scripts/setup_vcan.sh
 
       - name: Test
         run: ctest --test-dir build --output-on-failure
