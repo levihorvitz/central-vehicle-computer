@@ -1,0 +1,205 @@
+[DOCUMENT]
+TITLE: Software Requirements - CAN Receive Path
+
+[GRAMMAR]
+ELEMENTS:
+- TAG: TEXT
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+- TAG: REQUIREMENT
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: STATUS
+    TYPE: SingleChoice(Draft, Reviewed, Approved)
+    REQUIRED: True
+  - TITLE: TAGS
+    TYPE: Tag
+    REQUIRED: False
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+  - TITLE: RATIONALE
+    TYPE: String
+    REQUIRED: False
+  - TITLE: VERIFICATION
+    TYPE: MultipleChoice(Test, Demonstration, Inspection, Analysis)
+    REQUIRED: True
+  RELATIONS:
+  - TYPE: Parent
+  - TYPE: File
+
+[TEXT]
+STATEMENT: >>>
+This document states the software requirements of the CAN receive path. The receive thread takes
+frames from the bus component and puts them in the receive queue; the logic thread takes them out
+once per cycle. The document also states how the loss of the bus interface is reported, whichever
+side sees it first: the receive thread or a send from the logic thread.
+
+Frames are sent directly from the logic thread, as SW_CAN_015 allows; there is no transmit queue.
+The bus is opened before the receive thread starts and closed after it stops. The E2E check and
+decoding happen in the logic thread after a frame leaves the queue and are not covered here.
+Reopening the bus after the interface is lost belongs to the hardware stage and is not covered here.
+
+Each requirement links to the system requirements it serves with a Parent relation.
+Requirements tagged "derived" have no system-level parent: they come from design decisions
+rather than from a system requirement, and their rationale explains why they exist.
+<<<
+
+[REQUIREMENT]
+UID: SW_CANRX_001
+STATUS: Draft
+TAGS: can_rx
+TITLE: Receive thread
+STATEMENT: The receive thread shall put every frame the bus component delivers into the receive queue, together with the timestamp the bus component gave it.
+RATIONALE: Reception runs apart from the logic thread, so waiting for frames never delays a cycle.
+VERIFICATION: Test
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_MON_001
+- TYPE: Parent
+  VALUE: SYS_VEH_001
+- TYPE: Parent
+  VALUE: SYS_TIME_001
+
+[REQUIREMENT]
+UID: SW_CANRX_002
+STATUS: Draft
+TAGS: can_rx
+TITLE: Order and content
+STATEMENT: The receive queue shall deliver frames to the logic thread in the order in which they were put in, each with its identifier, DLC, data and timestamp unchanged.
+RATIONALE: The E2E check finds lost and repeated messages from the sequence of alive counters. Frames delivered out of order would look like lost or repeated messages.
+VERIFICATION: Test
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_MON_003
+- TYPE: Parent
+  VALUE: SYS_TIME_001
+
+[REQUIREMENT]
+UID: SW_CANRX_003
+STATUS: Draft
+TAGS: can_rx
+TITLE: Queue capacity
+STATEMENT: The receive queue shall hold at least 426 frames.
+RATIONALE: The highest bitrate in use is 500 kbit/s. The shortest classic frame, with no data bytes, takes 47 bit times including the interframe space, so a fully loaded bus carries at most 213 frames per 20 ms cycle. 426 frames cover two cycles, so one late cycle loses no frames.
+VERIFICATION: Test, Analysis
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_MON_002
+- TYPE: Parent
+  VALUE: SYS_MON_003
+
+[REQUIREMENT]
+UID: SW_CANRX_004
+STATUS: Draft
+TAGS: can_rx
+TITLE: Full queue
+STATEMENT: When the receive queue is full, the receive thread shall discard the new frame, leave the frames already in the queue unchanged, and add one to a count of discarded frames. The logic thread shall be able to read this count at any time, separately from the bus component's count of dropped frames.
+RATIONALE: Only the logic thread removes frames, so each end of the queue has a single writer and the queue needs no lock (SW_CANRX_006). A full queue means the logic thread has fallen at least two cycles behind; the count makes that visible instead of silent.
+VERIFICATION: Test
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_MON_003
+
+[REQUIREMENT]
+UID: SW_CANRX_005
+STATUS: Draft
+TAGS: can_rx
+TITLE: Frames per cycle
+STATEMENT: In each cycle, the logic thread shall take all waiting frames from the receive queue, up to 256 frames. Frames beyond the limit shall stay in the queue for the next cycle.
+RATIONALE: The limit bounds the work of a cycle, so a burst of frames cannot cause an overrun (SW_SCHED_005). 256 is above the 213 frames a 500 kbit/s bus can carry in a cycle, so in steady state the queue is emptied every cycle.
+VERIFICATION: Test
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_MON_002
+- TYPE: Parent
+  VALUE: SYS_LIGHT_001
+- TYPE: Parent
+  VALUE: SYS_STATE_003
+
+[REQUIREMENT]
+UID: SW_CANRX_006
+STATUS: Draft
+TAGS: can_rx
+TITLE: No waiting between threads
+STATEMENT: Putting a frame into the receive queue and taking a frame out of it shall never wait for the other thread.
+RATIONALE: A lock shared with the receive thread could hold the logic thread past its cycle deadline. One thread puts frames in and one takes them out, so a single-producer, single-consumer queue works without a lock.
+VERIFICATION: Test, Inspection
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_LIGHT_001
+- TYPE: Parent
+  VALUE: SYS_STATE_003
+
+[REQUIREMENT]
+UID: SW_CANRX_007
+STATUS: Draft
+TAGS: can_rx, derived
+TITLE: No allocation while running
+STATEMENT: Once the receive thread has started, neither the receive thread nor the receive queue shall allocate memory.
+RATIONALE: Derived from the architecture decision on no dynamic allocation after initialisation. Starting the thread may allocate; it happens during initialisation.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CANRX_008
+STATUS: Draft
+TAGS: can_rx, derived
+TITLE: Start and stop
+STATEMENT: The receive thread shall start receiving when started. Starting a receive thread that is already running shall report failure without side effects. When asked to stop, the receive thread shall stop receiving and finish within 100 ms. Asking a receive thread that is not running to stop shall have no effect.
+RATIONALE: Derived. Shutdown must take a bounded time and must be possible from any state. The bound comes from the receive timeout, not from the frame traffic.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CANRX_009
+STATUS: Draft
+TAGS: can_rx
+TITLE: Interface status
+STATEMENT: The communication layer shall keep an interface status, Available or Lost, that the logic thread can read at any time without waiting.
+RATIONALE: When all units fall silent at once, the status tells the vehicle state manager that the cause is the bus interface and not the units.
+VERIFICATION: Test
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_MON_002
+
+[REQUIREMENT]
+UID: SW_CANRX_010
+STATUS: Draft
+TAGS: can_rx
+TITLE: Interface lost while receiving
+STATEMENT: When the bus component reports that the interface was lost while receiving, the receive thread shall set the interface status to Lost and stop receiving.
+RATIONALE: After the loss, a receive call returns at once every time (SW_CAN_017), so a thread that kept receiving would spin.
+VERIFICATION: Test
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_MON_002
+
+[REQUIREMENT]
+UID: SW_CANRX_011
+STATUS: Draft
+TAGS: can_rx
+TITLE: Interface lost while sending
+STATEMENT: When the bus component reports that the interface was lost while sending, the logic thread shall set the interface status to Lost.
+RATIONALE: Either side may see the loss first. On SocketCAN, a failed send reads and clears the socket's error, after which the receive thread may not see the loss at all.
+VERIFICATION: Test
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_MON_002
+
+[REQUIREMENT]
+UID: SW_CANRX_012
+STATUS: Draft
+TAGS: can_rx, derived
+TITLE: Lost status is kept
+STATEMENT: Once the interface status is Lost, it shall stay Lost until the system restarts.
+RATIONALE: Derived. Reopening the bus is not supported in this stage, so a status that returned to Available would be wrong.
+VERIFICATION: Test
