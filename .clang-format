@@ -1,0 +1,28 @@
+---
+Language: Cpp
+BasedOnStyle: Google
+Standard: c++17
+
+IndentWidth: 4
+ContinuationIndentWidth: 4
+AccessModifierOffset: -4
+ColumnLimit: 120
+NamespaceIndentation: None
+FixNamespaceComments: true
+SpacesBeforeTrailingComments: 2
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Empty
+
+AlwaysBreakTemplateDeclarations: Yes
+BreakAfterAttributes: Always
+
+IncludeBlocks: Preserve
+SortIncludes: CaseSensitive
+...
