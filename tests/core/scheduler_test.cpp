@@ -12,10 +12,10 @@
 
 using namespace std::chrono_literals;
 using cvc::core::CCyclicScheduler;
-using cvc::core::TDuration;
 using cvc::core::IClock;
 using cvc::core::ILivenessListener;
 using cvc::core::ITask;
+using cvc::core::TDuration;
 using cvc::core::TTimePoint;
 using cvc::test::CFakeClock;
 
@@ -25,8 +25,7 @@ constexpr TDuration kPeriod = 20ms;
 
 class CStopAfter final : public ITask {
 public:
-    CStopAfter(CCyclicScheduler& scheduler, std::uint64_t cycles)
-        : scheduler_(scheduler), remaining_(cycles) {}
+    CStopAfter(CCyclicScheduler& scheduler, std::uint64_t cycles) : scheduler_(scheduler), remaining_(cycles) {}
 
     void step() override {
         if (remaining_ > 0 && --remaining_ == 0) {
@@ -50,8 +49,14 @@ public:
         ++count_;
     }
 
-    [[nodiscard]] std::size_t count() const { return count_; }
-    [[nodiscard]] TDuration sinceFirst(std::size_t cycle) const { return times_.at(cycle) - times_.at(0); }
+    [[nodiscard]]
+    std::size_t count() const {
+        return count_;
+    }
+    [[nodiscard]]
+    TDuration sinceFirst(std::size_t cycle) const {
+        return times_.at(cycle) - times_.at(0);
+    }
 
 private:
     const IClock& clock_;
@@ -93,7 +98,10 @@ class CCallCounter final : public ITask {
 public:
     void step() override { ++calls_; }
 
-    [[nodiscard]] std::uint64_t calls() const { return calls_; }
+    [[nodiscard]]
+    std::uint64_t calls() const {
+        return calls_;
+    }
 
 private:
     std::uint64_t calls_ = 0;
@@ -108,8 +116,14 @@ public:
         ++size_;
     }
 
-    [[nodiscard]] std::size_t size() const { return size_; }
-    [[nodiscard]] int at(std::size_t index) const { return entries_.at(index); }
+    [[nodiscard]]
+    std::size_t size() const {
+        return size_;
+    }
+    [[nodiscard]]
+    int at(std::size_t index) const {
+        return entries_.at(index);
+    }
 
 private:
     std::array<int, 64> entries_{};
@@ -131,7 +145,10 @@ class CLivenessCounter final : public ILivenessListener {
 public:
     void onAlive() override { ++signals_; }
 
-    [[nodiscard]] std::uint64_t signals() const { return signals_; }
+    [[nodiscard]]
+    std::uint64_t signals() const {
+        return signals_;
+    }
 
 private:
     std::uint64_t signals_ = 0;
@@ -141,7 +158,10 @@ class CLateClock final : public IClock {
 public:
     explicit CLateClock(TDuration lateness) : lateness_(lateness) {}
 
-    [[nodiscard]] TTimePoint now() const override { return now_; }
+    [[nodiscard]]
+    TTimePoint now() const override {
+        return now_;
+    }
 
     void sleepUntil(TTimePoint deadline) override {
         if (deadline > now_) {
@@ -157,15 +177,17 @@ private:
 
 class CRegisterDuringRun final : public ITask {
 public:
-    CRegisterDuringRun(CCyclicScheduler& scheduler, ITask& extra)
-        : scheduler_(scheduler), extra_(extra) {}
+    CRegisterDuringRun(CCyclicScheduler& scheduler, ITask& extra) : scheduler_(scheduler), extra_(extra) {}
 
     void step() override {
         accepted_ = scheduler_.registerTask(extra_);
         scheduler_.requestStop();
     }
 
-    [[nodiscard]] bool accepted() const { return accepted_; }
+    [[nodiscard]]
+    bool accepted() const {
+        return accepted_;
+    }
 
 private:
     CCyclicScheduler& scheduler_;
@@ -175,8 +197,7 @@ private:
 
 class CAllocationProbe final : public ITask {
 public:
-    CAllocationProbe(CCyclicScheduler& scheduler, std::uint64_t cycles)
-        : scheduler_(scheduler), cycles_(cycles) {}
+    CAllocationProbe(CCyclicScheduler& scheduler, std::uint64_t cycles) : scheduler_(scheduler), cycles_(cycles) {}
 
     void step() override {
         ++current_;
@@ -189,7 +210,10 @@ public:
         }
     }
 
-    [[nodiscard]] std::size_t allocations() const { return last_ - first_; }
+    [[nodiscard]]
+    std::size_t allocations() const {
+        return last_ - first_;
+    }
 
 private:
     CCyclicScheduler& scheduler_;
@@ -205,7 +229,10 @@ public:
 
     void attach(CCyclicScheduler& scheduler) { scheduler_ = &scheduler; }
 
-    [[nodiscard]] TTimePoint now() const override { return now_; }
+    [[nodiscard]]
+    TTimePoint now() const override {
+        return now_;
+    }
 
     void sleepUntil(TTimePoint deadline) override {
         if (deadline > now_) {

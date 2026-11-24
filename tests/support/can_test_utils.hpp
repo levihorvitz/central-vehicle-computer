@@ -7,7 +7,8 @@
 
 namespace cvc::test {
 
-[[nodiscard]] inline comm::SCanFrame makeFrame(std::uint32_t id, std::uint8_t dlc = comm::kMaxCanDlc) {
+[[nodiscard]]
+inline comm::SCanFrame makeFrame(std::uint32_t id, std::uint8_t dlc = comm::kMaxCanDlc) {
     comm::SCanFrame frame;
     frame.id = id;
     frame.dlc = dlc;
@@ -17,7 +18,8 @@ namespace cvc::test {
     return frame;
 }
 
-[[nodiscard]] inline bool sameFrame(const comm::SCanFrame& a, const comm::SCanFrame& b) {
+[[nodiscard]]
+inline bool sameFrame(const comm::SCanFrame& a, const comm::SCanFrame& b) {
     if (a.id != b.id || a.dlc != b.dlc || a.dlc > comm::kMaxCanDlc) {
         return false;
     }

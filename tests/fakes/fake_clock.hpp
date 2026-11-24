@@ -6,7 +6,10 @@ namespace cvc::test {
 
 class CFakeClock final : public core::IClock {
 public:
-    [[nodiscard]] core::TTimePoint now() const override { return now_; }
+    [[nodiscard]]
+    core::TTimePoint now() const override {
+        return now_;
+    }
 
     void sleepUntil(core::TTimePoint deadline) override {
         if (deadline > now_) {

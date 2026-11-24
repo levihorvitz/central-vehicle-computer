@@ -40,19 +40,23 @@ public:
     virtual ~ICanBus() = default;
 
     // [SW_CAN_003]
-    [[nodiscard]] virtual EOpenResult open(std::string_view interfaceName, EBusMode mode) = 0;
+    [[nodiscard]]
+    virtual EOpenResult open(std::string_view interfaceName, EBusMode mode) = 0;
 
     // [SW_CAN_005]
     virtual void close() noexcept = 0;
 
     // [SW_CAN_004, SW_CAN_006, SW_CAN_007, SW_CAN_009, SW_CAN_016, SW_CAN_017]
-    [[nodiscard]] virtual ESendResult send(const SCanFrame& frame) = 0;
+    [[nodiscard]]
+    virtual ESendResult send(const SCanFrame& frame) = 0;
 
     // [SW_CAN_004, SW_CAN_008, SW_CAN_010, SW_CAN_012, SW_CAN_017]
-    [[nodiscard]] virtual EReceiveResult receive(SReceivedFrame& received, core::TDuration timeout) = 0;
+    [[nodiscard]]
+    virtual EReceiveResult receive(SReceivedFrame& received, core::TDuration timeout) = 0;
 
     // [SW_CAN_013]
-    [[nodiscard]] virtual std::uint64_t droppedFrames() const noexcept = 0;
+    [[nodiscard]]
+    virtual std::uint64_t droppedFrames() const noexcept = 0;
 };
 
 }  // namespace cvc::comm

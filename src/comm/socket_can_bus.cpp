@@ -1,35 +1,34 @@
-#include <cstring>
-#include <algorithm>
-#include <unistd.h>
 #include <linux/can.h>
 #include <net/if.h>
-#include <sys/socket.h>
-#include <cstddef>
-#include <cerrno>
 #include <poll.h>
+#include <sys/socket.h>
 #include <sys/uio.h>
+#include <unistd.h>
+#include <algorithm>
+#include <cerrno>
 #include <chrono>
+#include <cstddef>
+#include <cstring>
 #include <limits>
 
 #include "comm/socket_can_bus.hpp"
 
-
 namespace cvc::comm {
 
-    namespace {
+namespace {
 
-    constexpr std::uint32_t kObdFunctionalRequestId = 0x7DFU;
-    constexpr std::uint32_t kObdFirstPhysicalRequestId = 0x7E0U;
-    constexpr std::uint32_t kObdLastPhysicalRequestId = 0x7E7U;
+constexpr std::uint32_t kObdFunctionalRequestId = 0x7DFU;
+constexpr std::uint32_t kObdFirstPhysicalRequestId = 0x7E0U;
+constexpr std::uint32_t kObdLastPhysicalRequestId = 0x7E7U;
 
-    using TSteadyClock = std::chrono::steady_clock;
+using TSteadyClock = std::chrono::steady_clock;
 
-    [[nodiscard]] bool isObdRequestId(std::uint32_t id) noexcept {
-        return id == kObdFunctionalRequestId ||
-            (kObdFirstPhysicalRequestId<=id && id <= kObdLastPhysicalRequestId);
-    }
+[[nodiscard]]
+bool isObdRequestId(std::uint32_t id) noexcept {
+    return id == kObdFunctionalRequestId || (kObdFirstPhysicalRequestId <= id && id <= kObdLastPhysicalRequestId);
+}
 
-    }  // namespace
+}  // namespace
 
 CSocketCanBus::CSocketCanBus(core::IClock& clock) : clock_(clock) {}
 
@@ -74,7 +73,7 @@ EOpenResult CSocketCanBus::open(std::string_view interfaceName, EBusMode mode) {
     }
 
     const int enable = 1;
-    //enables a socket option that allows you to receive information about dropped packets.
+    // enables a socket option that allows you to receive information about dropped packets.
     if (::setsockopt(fd, SOL_SOCKET, SO_RXQ_OVFL, &enable, static_cast<socklen_t>(sizeof(enable))) != 0) {
         return fail();
     }
@@ -86,11 +85,11 @@ EOpenResult CSocketCanBus::open(std::string_view interfaceName, EBusMode mode) {
 }
 
 void CSocketCanBus::close() noexcept {
-    if (fd_==-1)
+    if (fd_ == -1)
         return;
 
     ::close(fd_);
-    fd_=-1;
+    fd_ = -1;
 }
 
 ESendResult CSocketCanBus::send(const SCanFrame& frame) {
@@ -136,12 +135,12 @@ EReceiveResult CSocketCanBus::receive(SReceivedFrame& received, core::TDuration 
     const TSteadyClock::time_point deadline =
         TSteadyClock::now() + std::chrono::duration_cast<TSteadyClock::duration>(timeout);
 
-    while (true){
+    while (true) {
         const TSteadyClock::duration remaining =
             std::max(deadline - TSteadyClock::now(), TSteadyClock::duration::zero());
         const std::chrono::milliseconds remainingMs = std::chrono::ceil<std::chrono::milliseconds>(remaining);
-        const int pollTimeout = static_cast<int>(std::min<std::chrono::milliseconds::rep>(
-            remainingMs.count(), std::numeric_limits<int>::max()));
+        const int pollTimeout = static_cast<int>(
+            std::min<std::chrono::milliseconds::rep>(remainingMs.count(), std::numeric_limits<int>::max()));
 
         pollfd pollEntry{fd_, POLLIN, 0};
         const int ready = ::poll(&pollEntry, 1U, pollTimeout);
@@ -179,8 +178,7 @@ EReceiveResult CSocketCanBus::receive(SReceivedFrame& received, core::TDuration 
             continue;
         }
 
-        for (cmsghdr* header = CMSG_FIRSTHDR(&message); header != nullptr;
-             header = CMSG_NXTHDR(&message, header)) {
+        for (cmsghdr* header = CMSG_FIRSTHDR(&message); header != nullptr; header = CMSG_NXTHDR(&message, header)) {
             if (header->cmsg_level == SOL_SOCKET && header->cmsg_type == SO_RXQ_OVFL) {
                 std::uint32_t droppedCount = 0U;
                 std::memcpy(&droppedCount, CMSG_DATA(header), sizeof(droppedCount));
@@ -188,8 +186,7 @@ EReceiveResult CSocketCanBus::receive(SReceivedFrame& received, core::TDuration 
             }
         }
 
-        if ((kernelFrame.can_id & (CAN_EFF_FLAG | CAN_RTR_FLAG | CAN_ERR_FLAG)) != 0U ||
-            kernelFrame.len > kMaxCanDlc) {
+        if ((kernelFrame.can_id & (CAN_EFF_FLAG | CAN_RTR_FLAG | CAN_ERR_FLAG)) != 0U || kernelFrame.len > kMaxCanDlc) {
             continue;
         }
 

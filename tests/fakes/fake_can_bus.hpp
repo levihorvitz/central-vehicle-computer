@@ -27,21 +27,27 @@ public:
     CFakeCanBus& operator=(CFakeCanBus&&) = delete;
     ~CFakeCanBus() override = default;
 
-    [[nodiscard]] comm::EOpenResult open(std::string_view interfaceName, comm::EBusMode mode) override;
+    [[nodiscard]]
+    comm::EOpenResult open(std::string_view interfaceName, comm::EBusMode mode) override;
     void close() noexcept override;
-    [[nodiscard]] comm::ESendResult send(const comm::SCanFrame& frame) override;
-    [[nodiscard]] comm::EReceiveResult receive(comm::SReceivedFrame& received, core::TDuration timeout) override;
-    [[nodiscard]] std::uint64_t droppedFrames() const noexcept override;
+    [[nodiscard]]
+    comm::ESendResult send(const comm::SCanFrame& frame) override;
+    [[nodiscard]]
+    comm::EReceiveResult receive(comm::SReceivedFrame& received, core::TDuration timeout) override;
+    [[nodiscard]]
+    std::uint64_t droppedFrames() const noexcept override;
 
     void deliver(const comm::SCanFrame& frame);
-    [[nodiscard]] bool takeTransmitted(comm::SCanFrame& frame);
+    [[nodiscard]]
+    bool takeTransmitted(comm::SCanFrame& frame);
     void loseInterface();
 
 private:
     template <std::size_t Capacity>
     class CFrameRing {
     public:
-        [[nodiscard]] bool push(const comm::SCanFrame& frame) {
+        [[nodiscard]]
+        bool push(const comm::SCanFrame& frame) {
             if (count_ == Capacity) {
                 return false;
             }
@@ -50,7 +56,8 @@ private:
             return true;
         }
 
-        [[nodiscard]] bool pop(comm::SCanFrame& frame) {
+        [[nodiscard]]
+        bool pop(comm::SCanFrame& frame) {
             if (count_ == 0U) {
                 return false;
             }
@@ -71,8 +78,10 @@ private:
         std::size_t count_ = 0U;
     };
 
-    [[nodiscard]] bool popReceived(comm::SReceivedFrame& received);
-    [[nodiscard]] static bool isObdRequestId(std::uint32_t id);
+    [[nodiscard]]
+    bool popReceived(comm::SReceivedFrame& received);
+    [[nodiscard]]
+    static bool isObdRequestId(std::uint32_t id);
 
     core::IClock& clock_;
     mutable std::mutex mutex_;
