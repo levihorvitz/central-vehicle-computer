@@ -54,10 +54,8 @@ public:
         }
         const auto stats = scheduler_.stats();
         std::printf("cycle %8llu | overruns %4llu | max start delay %7.3f ms | max execution %7.3f ms\n",
-                    static_cast<unsigned long long>(cycles_),
-                    static_cast<unsigned long long>(stats.overruns),
-                    toMilliseconds(stats.maxStartDelay),
-                    toMilliseconds(stats.maxExecutionTime));
+                    static_cast<unsigned long long>(cycles_), static_cast<unsigned long long>(stats.overruns),
+                    toMilliseconds(stats.maxStartDelay), toMilliseconds(stats.maxExecutionTime));
         std::fflush(stdout);
     }
 
@@ -112,14 +110,13 @@ int main(int argc, char** argv) {
     gScheduler = &scheduler;
     std::signal(SIGINT, onInterrupt);
 
-    std::printf("Running for %ld s at %llu Hz with %.1f ms of simulated work per cycle. Ctrl+C stops early.\n",
-                seconds, static_cast<unsigned long long>(kCyclesPerSecond),
+    std::printf("Running for %ld s at %llu Hz with %.1f ms of simulated work per cycle. Ctrl+C stops early.\n", seconds,
+                static_cast<unsigned long long>(kCyclesPerSecond),
                 std::chrono::duration<double, std::milli>(kSimulatedWork).count());
     scheduler.run();
 
     const auto stats = scheduler.stats();
-    std::printf("Done: %llu cycles, %llu overruns.\n",
-                static_cast<unsigned long long>(stats.cycles),
+    std::printf("Done: %llu cycles, %llu overruns.\n", static_cast<unsigned long long>(stats.cycles),
                 static_cast<unsigned long long>(stats.overruns));
     return EXIT_SUCCESS;
 }

@@ -15,7 +15,8 @@ public:
     virtual ~IClock() = default;
 
     // Returns the current time.
-    [[nodiscard]] virtual TTimePoint now() const = 0;
+    [[nodiscard]]
+    virtual TTimePoint now() const = 0;
     // Blocks until the given absolute time.
     virtual void sleepUntil(TTimePoint deadline) = 0;
 };

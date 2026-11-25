@@ -13,13 +13,18 @@ class CCanBusContractTest : public ::testing::TestWithParam<TCanBusHarnessFactor
 protected:
     void SetUp() override { harness_ = GetParam()(); }
 
-    [[nodiscard]] comm::ICanBus& bus() { return harness_->bus(); }
+    [[nodiscard]]
+    comm::ICanBus& bus() {
+        return harness_->bus();
+    }
 
-    [[nodiscard]] bool openBus(comm::EBusMode mode = comm::EBusMode::kSimulation) {
+    [[nodiscard]]
+    bool openBus(comm::EBusMode mode = comm::EBusMode::kSimulation) {
         return bus().open(harness_->interfaceName(), mode) == comm::EOpenResult::kOpened;
     }
 
-    [[nodiscard]] bool nothingTransmitted() {
+    [[nodiscard]]
+    bool nothingTransmitted() {
         comm::SCanFrame frame;
         return !harness_->takeTransmitted(frame);
     }

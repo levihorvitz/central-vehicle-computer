@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstdint>
 #include <atomic>
+#include <cstdint>
 #include <string_view>
 
 #include "comm/can_bus.hpp"
@@ -20,11 +20,15 @@ public:
     CSocketCanBus& operator=(CSocketCanBus&&) = delete;
     ~CSocketCanBus() override;
 
-    [[nodiscard]] EOpenResult open(std::string_view interfaceName, EBusMode mode) override;
+    [[nodiscard]]
+    EOpenResult open(std::string_view interfaceName, EBusMode mode) override;
     void close() noexcept override;
-    [[nodiscard]] ESendResult send(const SCanFrame& frame) override;
-    [[nodiscard]] EReceiveResult receive(SReceivedFrame& received, core::TDuration timeout) override;
-    [[nodiscard]] std::uint64_t droppedFrames() const noexcept override;
+    [[nodiscard]]
+    ESendResult send(const SCanFrame& frame) override;
+    [[nodiscard]]
+    EReceiveResult receive(SReceivedFrame& received, core::TDuration timeout) override;
+    [[nodiscard]]
+    std::uint64_t droppedFrames() const noexcept override;
 
 private:
     core::IClock& clock_;

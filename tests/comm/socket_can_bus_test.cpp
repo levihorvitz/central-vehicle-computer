@@ -39,7 +39,8 @@ constexpr const char* kInterface = "vcan0";
 constexpr core::TDuration kFrameTimeout = std::chrono::milliseconds(100);
 constexpr std::chrono::milliseconds kPeerTimeout{50};
 
-[[noreturn]] void fail(const std::string& what) {
+[[noreturn]]
+void fail(const std::string& what) {
     throw std::runtime_error(what + ": " + std::strerror(errno) + " (is vcan0 up? see scripts/setup_vcan.sh)");
 }
 
@@ -97,7 +98,8 @@ public:
         }
     }
 
-    [[nodiscard]] bool receive(can_frame& frame, std::chrono::milliseconds timeout) {
+    [[nodiscard]]
+    bool receive(can_frame& frame, std::chrono::milliseconds timeout) {
         pollfd waitFor{fd_, POLLIN, 0};
         if (::poll(&waitFor, 1, static_cast<int>(timeout.count())) <= 0) {
             return false;
@@ -113,14 +115,27 @@ class CSocketCanBusHarness final : public ICanBusHarness {
 public:
     CSocketCanBusHarness() : bus_(clock_), peer_(kInterface) {}
 
-    [[nodiscard]] comm::ICanBus& bus() override { return bus_; }
-    [[nodiscard]] std::string_view interfaceName() const override { return kInterface; }
-    [[nodiscard]] std::string_view missingInterfaceName() const override { return "cvcmissing0"; }
-    [[nodiscard]] CFakeClock& clock() override { return clock_; }
+    [[nodiscard]]
+    comm::ICanBus& bus() override {
+        return bus_;
+    }
+    [[nodiscard]]
+    std::string_view interfaceName() const override {
+        return kInterface;
+    }
+    [[nodiscard]]
+    std::string_view missingInterfaceName() const override {
+        return "cvcmissing0";
+    }
+    [[nodiscard]]
+    CFakeClock& clock() override {
+        return clock_;
+    }
 
     void deliver(const SCanFrame& frame) override { peer_.send(toKernelFrame(frame)); }
 
-    [[nodiscard]] bool takeTransmitted(SCanFrame& frame) override {
+    [[nodiscard]]
+    bool takeTransmitted(SCanFrame& frame) override {
         can_frame kernelFrame{};
         if (!peer_.receive(kernelFrame, kPeerTimeout)) {
             return false;
