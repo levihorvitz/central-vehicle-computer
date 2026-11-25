@@ -21,13 +21,16 @@ public:
     ~CSpscRingBuffer() = default;
 
     // [SW_CANRX_004] [SW_CANRX_006] [SW_CANRX_007]
-    [[nodiscard]] bool tryPush(const T& item) noexcept;
+    [[nodiscard]]
+    bool tryPush(const T& item) noexcept;
 
     // [SW_CANRX_002] [SW_CANRX_006] [SW_CANRX_007]
-    [[nodiscard]] bool tryPop(T& item) noexcept;
+    [[nodiscard]]
+    bool tryPop(T& item) noexcept;
 
     // [SW_CANRX_003]
-    [[nodiscard]] static constexpr std::size_t capacity() noexcept {
+    [[nodiscard]]
+    static constexpr std::size_t capacity() noexcept {
         return kCapacity;
     }
 };
