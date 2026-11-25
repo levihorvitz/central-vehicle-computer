@@ -27,6 +27,8 @@ if(CVC_SANITIZER)
     target_link_options(cvc_options INTERFACE -fsanitize=${CVC_SANITIZER})
 endif()
 
+find_package(Threads REQUIRED)
+
 add_library(cvc_core
     src/core/scheduler.cpp
     src/core/system_clock.cpp
@@ -35,14 +37,16 @@ target_include_directories(cvc_core PUBLIC include)
 target_link_libraries(cvc_core PUBLIC cvc_options)
 
 add_library(cvc_comm
+    src/comm/can_rx_thread.cpp
     src/comm/crc8.cpp
     src/comm/e2e.cpp
     src/comm/e2e_receiver.cpp
     src/comm/e2e_sender.cpp
+    src/comm/interface_status.cpp
     src/comm/socket_can_bus.cpp
 )
 target_include_directories(cvc_comm PUBLIC include)
-target_link_libraries(cvc_comm PUBLIC cvc_options)
+target_link_libraries(cvc_comm PUBLIC cvc_options Threads::Threads)
 
 add_subdirectory(apps)
 
