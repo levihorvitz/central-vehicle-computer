@@ -30,13 +30,25 @@ void* orThrow(void* memory) {
 
 }  // namespace
 
-void* operator new(std::size_t size) { return orThrow(allocate(size)); }
-void* operator new[](std::size_t size) { return orThrow(allocate(size)); }
-void* operator new(std::size_t size, const std::nothrow_t&) noexcept { return allocate(size); }
-void* operator new[](std::size_t size, const std::nothrow_t&) noexcept { return allocate(size); }
+void* operator new(std::size_t size) {
+    return orThrow(allocate(size));
+}
+void* operator new[](std::size_t size) {
+    return orThrow(allocate(size));
+}
+void* operator new(std::size_t size, const std::nothrow_t&) noexcept {
+    return allocate(size);
+}
+void* operator new[](std::size_t size, const std::nothrow_t&) noexcept {
+    return allocate(size);
+}
 
-void* operator new(std::size_t size, std::align_val_t alignment) { return orThrow(allocateAligned(size, alignment)); }
-void* operator new[](std::size_t size, std::align_val_t alignment) { return orThrow(allocateAligned(size, alignment)); }
+void* operator new(std::size_t size, std::align_val_t alignment) {
+    return orThrow(allocateAligned(size, alignment));
+}
+void* operator new[](std::size_t size, std::align_val_t alignment) {
+    return orThrow(allocateAligned(size, alignment));
+}
 void* operator new(std::size_t size, std::align_val_t alignment, const std::nothrow_t&) noexcept {
     return allocateAligned(size, alignment);
 }
@@ -44,19 +56,43 @@ void* operator new[](std::size_t size, std::align_val_t alignment, const std::no
     return allocateAligned(size, alignment);
 }
 
-void operator delete(void* memory) noexcept { std::free(memory); }
-void operator delete[](void* memory) noexcept { std::free(memory); }
-void operator delete(void* memory, std::size_t) noexcept { std::free(memory); }
-void operator delete[](void* memory, std::size_t) noexcept { std::free(memory); }
-void operator delete(void* memory, const std::nothrow_t&) noexcept { std::free(memory); }
-void operator delete[](void* memory, const std::nothrow_t&) noexcept { std::free(memory); }
+void operator delete(void* memory) noexcept {
+    std::free(memory);
+}
+void operator delete[](void* memory) noexcept {
+    std::free(memory);
+}
+void operator delete(void* memory, std::size_t) noexcept {
+    std::free(memory);
+}
+void operator delete[](void* memory, std::size_t) noexcept {
+    std::free(memory);
+}
+void operator delete(void* memory, const std::nothrow_t&) noexcept {
+    std::free(memory);
+}
+void operator delete[](void* memory, const std::nothrow_t&) noexcept {
+    std::free(memory);
+}
 
-void operator delete(void* memory, std::align_val_t) noexcept { std::free(memory); }
-void operator delete[](void* memory, std::align_val_t) noexcept { std::free(memory); }
-void operator delete(void* memory, std::size_t, std::align_val_t) noexcept { std::free(memory); }
-void operator delete[](void* memory, std::size_t, std::align_val_t) noexcept { std::free(memory); }
-void operator delete(void* memory, std::align_val_t, const std::nothrow_t&) noexcept { std::free(memory); }
-void operator delete[](void* memory, std::align_val_t, const std::nothrow_t&) noexcept { std::free(memory); }
+void operator delete(void* memory, std::align_val_t) noexcept {
+    std::free(memory);
+}
+void operator delete[](void* memory, std::align_val_t) noexcept {
+    std::free(memory);
+}
+void operator delete(void* memory, std::size_t, std::align_val_t) noexcept {
+    std::free(memory);
+}
+void operator delete[](void* memory, std::size_t, std::align_val_t) noexcept {
+    std::free(memory);
+}
+void operator delete(void* memory, std::align_val_t, const std::nothrow_t&) noexcept {
+    std::free(memory);
+}
+void operator delete[](void* memory, std::align_val_t, const std::nothrow_t&) noexcept {
+    std::free(memory);
+}
 
 namespace cvc::test {
 

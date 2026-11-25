@@ -30,13 +30,28 @@ class CFakeCanBusHarness final : public ICanBusHarness {
 public:
     CFakeCanBusHarness() : bus_(clock_) {}
 
-    [[nodiscard]] comm::ICanBus& bus() override { return bus_; }
-    [[nodiscard]] std::string_view interfaceName() const override { return CFakeCanBus::kInterfaceName; }
-    [[nodiscard]] std::string_view missingInterfaceName() const override { return "missing0"; }
-    [[nodiscard]] CFakeClock& clock() override { return clock_; }
+    [[nodiscard]]
+    comm::ICanBus& bus() override {
+        return bus_;
+    }
+    [[nodiscard]]
+    std::string_view interfaceName() const override {
+        return CFakeCanBus::kInterfaceName;
+    }
+    [[nodiscard]]
+    std::string_view missingInterfaceName() const override {
+        return "missing0";
+    }
+    [[nodiscard]]
+    CFakeClock& clock() override {
+        return clock_;
+    }
 
     void deliver(const SCanFrame& frame) override { bus_.deliver(frame); }
-    [[nodiscard]] bool takeTransmitted(SCanFrame& frame) override { return bus_.takeTransmitted(frame); }
+    [[nodiscard]]
+    bool takeTransmitted(SCanFrame& frame) override {
+        return bus_.takeTransmitted(frame);
+    }
 
 private:
     CFakeClock clock_;

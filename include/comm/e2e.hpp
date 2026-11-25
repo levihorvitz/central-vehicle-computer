@@ -21,6 +21,7 @@ enum class EE2eResult {
     kCorrupted,
 };
 
-[[nodiscard]] std::uint8_t e2eCrc(TMessageId id, const TPayload& payload) noexcept;
+[[nodiscard]]
+std::uint8_t e2eCrc(TMessageId id, const TPayload& payload) noexcept;
 
 }  // namespace cvc::comm
