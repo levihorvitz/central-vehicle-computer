@@ -229,3 +229,12 @@ TITLE: Interface lost while open
 STATEMENT: If the CAN interface becomes unavailable while the bus is open, send and receive requests shall report failure without blocking beyond the receive timeout, and the bus component shall report that the interface is unavailable.
 RATIONALE: Derived. A lost interface, such as a disconnected CAN adapter, must be visible so that it can be handled as a fault, and must not hang the I/O thread.
 VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CAN_018
+STATUS: Draft
+TAGS: can_bus, derived
+TITLE: Interface lost is latched
+STATEMENT: After the bus component has reported that the CAN interface is lost, every later send and receive request shall report that the interface is lost, for as long as the bus stays open.
+RATIONALE: Derived. On Linux, the first socket operation that sees the interface go down consumes the error. If a send sees it first, later receives only time out, and the receive thread never learns that the interface was lost. Found by the manual check for SW_CANRX_011.
+VERIFICATION: Test

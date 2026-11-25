@@ -137,4 +137,22 @@ TEST(FakeCanBusTest, ReportsInterfaceLostOnSendAndReceive) {
     EXPECT_FALSE(bus.takeTransmitted(transmitted));
 }
 
+// SW_CAN_018
+TEST(FakeCanBusTest, KeepsReportingInterfaceLostWhileOpen) {
+    constexpr std::size_t kRepeats = 3U;
+
+    CFakeClock clock;
+    CFakeCanBus bus(clock);
+    ASSERT_EQ(bus.open(CFakeCanBus::kInterfaceName, EBusMode::kSimulation), EOpenResult::kOpened);
+
+    bus.loseInterface();
+    ASSERT_EQ(bus.send(makeFrame(0x100U)), ESendResult::kInterfaceLost);
+
+    for (std::size_t i = 0U; i < kRepeats; ++i) {
+        SReceivedFrame received;
+        EXPECT_EQ(bus.receive(received, kShortTimeout), EReceiveResult::kInterfaceLost);
+        EXPECT_EQ(bus.send(makeFrame(0x100U)), ESendResult::kInterfaceLost);
+    }
+}
+
 }  // namespace cvc::test
