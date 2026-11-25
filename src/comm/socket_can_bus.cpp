@@ -138,12 +138,16 @@ EReceiveResult CSocketCanBus::receive(SReceivedFrame& received, core::TDuration 
     while (true) {
         const TSteadyClock::duration remaining =
             std::max(deadline - TSteadyClock::now(), TSteadyClock::duration::zero());
+        
         const std::chrono::milliseconds remainingMs = std::chrono::ceil<std::chrono::milliseconds>(remaining);
+    
         const int pollTimeout = static_cast<int>(
             std::min<std::chrono::milliseconds::rep>(remainingMs.count(), std::numeric_limits<int>::max()));
 
         pollfd pollEntry{fd_, POLLIN, 0};
+        
         const int ready = ::poll(&pollEntry, 1U, pollTimeout);
+        
         if (ready == 0) {
             return EReceiveResult::kTimeout;
         }
