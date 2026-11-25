@@ -266,4 +266,23 @@ TEST_F(CSocketCanBusTest, DISABLED_ReportsInterfaceLostWhenInterfaceGoesDown) {
     EXPECT_EQ(bus_.send(makeFrame(0x123U)), comm::ESendResult::kInterfaceLost);
 }
 
+// SW_CAN_018, SW_CANRX_011. Manual: bring vcan0 down while this test waits, e.g.
+// (sleep 2 && sudo ip link set vcan0 down) & ./socketcan_tests --gtest_also_run_disabled_tests ...
+TEST_F(CSocketCanBusTest, DISABLED_ReceiveReportsInterfaceLostAfterSendReportedIt) {
+    constexpr core::TDuration kManualWindow = std::chrono::seconds(30);
+    constexpr core::TDuration kRetryPeriod = std::chrono::milliseconds(10);
+    constexpr core::TDuration kReceiveTimeout = std::chrono::milliseconds(100);
+
+    const auto deadline = std::chrono::steady_clock::now() + kManualWindow;
+    comm::ESendResult sendResult = bus_.send(makeFrame(0x123U));
+    while (sendResult != comm::ESendResult::kInterfaceLost && std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(kRetryPeriod);
+        sendResult = bus_.send(makeFrame(0x123U));
+    }
+    ASSERT_EQ(sendResult, comm::ESendResult::kInterfaceLost);
+
+    SReceivedFrame received;
+    EXPECT_EQ(bus_.receive(received, kReceiveTimeout), EReceiveResult::kInterfaceLost);
+}
+
 }  // namespace cvc::test

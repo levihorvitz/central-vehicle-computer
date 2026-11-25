@@ -81,6 +81,7 @@ EOpenResult CSocketCanBus::open(std::string_view interfaceName, EBusMode mode) {
     fd_ = fd;
     mode_ = mode;
     dropped_.store(0U);
+    interfaceLost_.store(false, std::memory_order_relaxed);
     return EOpenResult::kOpened;
 }
 
@@ -95,6 +96,10 @@ void CSocketCanBus::close() noexcept {
 ESendResult CSocketCanBus::send(const SCanFrame& frame) {
     if (fd_ == -1) {
         return ESendResult::kNotOpen;
+    }
+
+    if (interfaceLost_.load(std::memory_order_relaxed)) {
+        return ESendResult::kInterfaceLost;
     }
 
     if (frame.id > kMaxStandardId || frame.dlc > kMaxCanDlc) {
@@ -124,12 +129,16 @@ ESendResult CSocketCanBus::send(const SCanFrame& frame) {
         }
     }
 
-    return ESendResult::kInterfaceLost;
+    return latchInterfaceLost<ESendResult>();
 }
 
 EReceiveResult CSocketCanBus::receive(SReceivedFrame& received, core::TDuration timeout) {
     if (fd_ == -1) {
         return EReceiveResult::kNotOpen;
+    }
+
+    if (interfaceLost_.load(std::memory_order_relaxed)) {
+        return EReceiveResult::kInterfaceLost;
     }
 
     const TSteadyClock::time_point deadline =
@@ -138,16 +147,16 @@ EReceiveResult CSocketCanBus::receive(SReceivedFrame& received, core::TDuration 
     while (true) {
         const TSteadyClock::duration remaining =
             std::max(deadline - TSteadyClock::now(), TSteadyClock::duration::zero());
-        
+
         const std::chrono::milliseconds remainingMs = std::chrono::ceil<std::chrono::milliseconds>(remaining);
-    
+
         const int pollTimeout = static_cast<int>(
             std::min<std::chrono::milliseconds::rep>(remainingMs.count(), std::numeric_limits<int>::max()));
 
         pollfd pollEntry{fd_, POLLIN, 0};
-        
+
         const int ready = ::poll(&pollEntry, 1U, pollTimeout);
-        
+
         if (ready == 0) {
             return EReceiveResult::kTimeout;
         }
@@ -155,10 +164,10 @@ EReceiveResult CSocketCanBus::receive(SReceivedFrame& received, core::TDuration 
             if (errno == EINTR) {
                 continue;
             }
-            return EReceiveResult::kInterfaceLost;
+            return latchInterfaceLost<EReceiveResult>();
         }
         if ((pollEntry.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-            return EReceiveResult::kInterfaceLost;
+            return latchInterfaceLost<EReceiveResult>();
         }
 
         can_frame kernelFrame{};
@@ -176,7 +185,7 @@ EReceiveResult CSocketCanBus::receive(SReceivedFrame& received, core::TDuration 
             if (errno == EAGAIN || errno == EINTR) {
                 continue;
             }
-            return EReceiveResult::kInterfaceLost;
+            return latchInterfaceLost<EReceiveResult>();
         }
         if (bytes != static_cast<ssize_t>(sizeof(kernelFrame))) {
             continue;

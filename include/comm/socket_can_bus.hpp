@@ -31,10 +31,18 @@ public:
     std::uint64_t droppedFrames() const noexcept override;
 
 private:
+    template <typename TResult>
+    [[nodiscard]]
+    TResult latchInterfaceLost() noexcept {
+        interfaceLost_.store(true, std::memory_order_relaxed);
+        return TResult::kInterfaceLost;
+    }
+
     core::IClock& clock_;
     int fd_ = -1;
     EBusMode mode_ = EBusMode::kSimulation;
     std::atomic<std::uint64_t> dropped_{0U};
+    std::atomic<bool> interfaceLost_{false};
 };
 
 }  // namespace cvc::comm
