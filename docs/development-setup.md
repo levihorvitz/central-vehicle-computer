@@ -94,6 +94,8 @@ ctest --test-dir build --output-on-failure
 
 The first `cmake` downloads GoogleTest. The last line must end with `100% tests passed`.
 
+Before opening a pull request, run `scripts/build_and_test.sh`. It builds and tests the release, AddressSanitizer + UBSan and ThreadSanitizer configurations with warnings as errors, as CI does.
+
 ## 8. Virtual CAN
 
 The simulated car runs on a virtual CAN bus, `vcan0`:
@@ -127,6 +129,7 @@ If you use Claude Code, read `CLAUDE.md` first: it never commits, pushes or open
 | Task | Command |
 | --- | --- |
 | Build and run all tests | `cmake --build build -j && ctest --test-dir build --output-on-failure` |
+| Build and test all CI configurations (before a pull request) | `scripts/build_and_test.sh` |
 | Browse the requirements | `strictdoc server .`, then open http://127.0.0.1:5111 |
 | Show the communication matrix | `cantools dump icd/central_vehicle_computer.dbc` |
 | Run the scheduler demo | `./build/apps/scheduler_demo 5` |
