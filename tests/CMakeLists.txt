@@ -15,6 +15,7 @@ add_executable(core_tests
     core/fake_clock_test.cpp
     core/scheduler_test.cpp
     core/system_clock_test.cpp
+    core/spsc_ring_buffer_test.cpp
     support/allocation_counter.cpp
 )
 target_include_directories(core_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -30,6 +31,7 @@ add_executable(comm_tests
     comm/can_bus_contract_test.cpp
     comm/fake_can_bus_test.cpp
     fakes/fake_can_bus.cpp
+    comm/can_rx_queue_test.cpp
 )
 target_include_directories(comm_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(comm_tests PRIVATE cvc_comm GTest::gtest_main)
