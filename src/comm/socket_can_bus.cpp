@@ -86,8 +86,9 @@ EOpenResult CSocketCanBus::open(std::string_view interfaceName, EBusMode mode) {
 }
 
 void CSocketCanBus::close() noexcept {
-    if (fd_ == -1)
+    if (fd_ == -1) {
         return;
+    }
 
     ::close(fd_);
     fd_ = -1;

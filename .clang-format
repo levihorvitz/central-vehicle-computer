@@ -19,6 +19,7 @@ AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 AllowShortBlocksOnASingleLine: Never
 AllowShortLambdasOnASingleLine: Empty
+InsertBraces: true
 
 AlwaysBreakTemplateDeclarations: Yes
 BreakAfterAttributes: Always

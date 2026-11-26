@@ -10,8 +10,9 @@ std::uint8_t crc8SaeJ1850(const std::uint8_t* data, std::size_t length) noexcept
             if (crc & 0x80) {
                 crc *= 2;
                 crc ^= 0x1D;
-            } else
+            } else {
                 crc *= 2;
+            }
         }
     }
     return crc ^ 0xFF;
