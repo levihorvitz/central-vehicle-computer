@@ -32,6 +32,7 @@ add_executable(comm_tests
     comm/e2e_sender_test.cpp
     comm/fake_can_bus_test.cpp
     comm/interface_status_test.cpp
+    comm/message_codec_test.cpp
     fakes/fake_can_bus.cpp
     support/allocation_counter.cpp
 )
