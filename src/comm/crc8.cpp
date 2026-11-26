@@ -3,19 +3,19 @@
 namespace cvc::comm {
 
 std::uint8_t crc8SaeJ1850(const std::uint8_t* data, std::size_t length) noexcept {
-    uint8_t crc = 0xFF;
-    for (size_t i = 0; i < length; i++) {
-        crc ^= data[i];
-        for (int j = 0; j < 8; j++) {
-            if (crc & 0x80) {
-                crc *= 2;
-                crc ^= 0x1D;
+    std::uint8_t crc = 0xFF;
+    for (std::size_t i = 0; i < length; ++i) {
+        crc = static_cast<std::uint8_t>(crc ^ data[i]);
+        for (int j = 0; j < 8; ++j) {
+            if ((crc & 0x80U) != 0U) {
+                crc = static_cast<std::uint8_t>(crc << 1U);
+                crc = static_cast<std::uint8_t>(crc ^ 0x1DU);
             } else {
-                crc *= 2;
+                crc = static_cast<std::uint8_t>(crc << 1U);
             }
         }
     }
-    return crc ^ 0xFF;
+    return static_cast<std::uint8_t>(crc ^ 0xFFU);
 }
 
 }  // namespace cvc::comm
