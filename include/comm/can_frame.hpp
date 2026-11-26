@@ -10,11 +10,14 @@ namespace cvc::comm {
 inline constexpr std::uint32_t kMaxStandardId = 0x7FFU;
 inline constexpr std::uint8_t kMaxCanDlc = 8U;
 
+using TPayload = std::array<std::uint8_t, kMaxCanDlc>;
+using TMessageId = std::uint16_t;
+
 // [SW_CAN_001]
 struct SCanFrame {
     std::uint32_t id = 0U;
     std::uint8_t dlc = 0U;
-    std::array<std::uint8_t, kMaxCanDlc> data{};
+    TPayload data{};
 };
 
 // [SW_CAN_012]

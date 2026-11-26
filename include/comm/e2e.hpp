@@ -1,13 +1,11 @@
 #pragma once
 
-#include <array>
 #include <cstddef>
 #include <cstdint>
 
-namespace cvc::comm {
+#include "comm/can_frame.hpp"
 
-using TPayload = std::array<std::uint8_t, 8>;
-using TMessageId = std::uint16_t;
+namespace cvc::comm {
 
 constexpr std::size_t kCounterByte = 6;
 constexpr std::size_t kCrcByte = 7;
