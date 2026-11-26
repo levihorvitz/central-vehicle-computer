@@ -22,6 +22,7 @@ Each file in this folder records one significant design decision: the context, t
 | [0008](0008-cycle-period.md) | Cycle period of 20 ms | Accepted |
 | [0009](0009-manager-initialization.md) | Manager initialization with init(), power-on BIT inside the cycle | Accepted |
 | [0010](0010-fault-timing.md) | Fault timing measured in elapsed clock time | Accepted |
+| [0011](0011-generated-message-codec.md) | Message codec generated from the DBC by our own generator | Accepted |
 
 ## Template
 
