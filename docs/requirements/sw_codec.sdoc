@@ -1,0 +1,135 @@
+[DOCUMENT]
+TITLE: Software Requirements - Message Codec
+
+[GRAMMAR]
+ELEMENTS:
+- TAG: TEXT
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+- TAG: REQUIREMENT
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: STATUS
+    TYPE: SingleChoice(Draft, Reviewed, Approved)
+    REQUIRED: True
+  - TITLE: TAGS
+    TYPE: Tag
+    REQUIRED: False
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+  - TITLE: RATIONALE
+    TYPE: String
+    REQUIRED: False
+  - TITLE: VERIFICATION
+    TYPE: MultipleChoice(Test, Demonstration, Inspection, Analysis)
+    REQUIRED: True
+  RELATIONS:
+  - TYPE: Parent
+  - TYPE: File
+
+[TEXT]
+STATEMENT: >>>
+This document states the software requirements of the message codec: the code that turns the payload
+of a received frame into signal values, and signal values into the payload of a frame to send, for every
+message in the DBC file icd/central_vehicle_computer.dbc. The codec is generated from the DBC (ADR 0011).
+The generator is a development tool and its requirements are not covered here.
+
+The alive counter and CRC of every message are written and checked by the E2E layer (ADR 0007) and are
+not covered here. Checking the DLC and the E2E protection of a received frame before it is decoded
+happens in the logic thread and is not covered here.
+
+Each requirement links to the system requirements it serves with a Parent relation.
+Requirements tagged "derived" have no system-level parent: they come from design decisions
+rather than from a system requirement, and their rationale explains why they exist.
+<<<
+
+[REQUIREMENT]
+UID: SW_CODEC_001
+STATUS: Draft
+TAGS: codec
+TITLE: Message layout
+STATEMENT: The codec shall encode and decode every signal of every message in the DBC, other than the alive counter and the CRC, at the start bit, length and byte order the DBC defines for it.
+RATIONALE: The DBC is the interface control document. The central computer and the simulated car must agree on every bit.
+VERIFICATION: Test
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_MON_001
+- TYPE: Parent
+  VALUE: SYS_LIGHT_001
+- TYPE: Parent
+  VALUE: SYS_LIGHT_002
+- TYPE: Parent
+  VALUE: SYS_STATE_001
+
+[REQUIREMENT]
+UID: SW_CODEC_002
+STATUS: Draft
+TAGS: codec
+TITLE: Physical values
+STATEMENT: Decoding shall convert a raw value to the physical value equal to the raw value multiplied by the scale, plus the offset. Encoding shall convert a physical value to the raw value nearest to the physical value minus the offset, divided by the scale. The scale and offset are those the DBC defines for the signal.
+RATIONALE: Managers and the dashboard work in physical units such as rpm, degC and bar. Rounding to the nearest raw value keeps the encoding error within half a step.
+VERIFICATION: Test
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_MON_001
+- TYPE: Parent
+  VALUE: SYS_DISP_001
+
+[REQUIREMENT]
+UID: SW_CODEC_003
+STATUS: Draft
+TAGS: codec, derived
+TITLE: Invalid received values
+STATEMENT: Decoding shall report a signal as invalid, and not convert it, when its physical value is outside the range the DBC defines, or when the signal has a value table and its raw value has no name in it.
+RATIONALE: A message can pass the E2E check and still carry a value the ICD does not allow, for example from a faulty unit. In DBC 0.1.0, EngineState has 2 bits but names only the values 0 to 2, and the 12-bit BrakePressure can reach 409.5 bar against a range of 0 to 250 bar. Such a value must not reach a manager as if it were valid.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CODEC_004
+STATUS: Draft
+TAGS: codec, derived
+TITLE: Invalid values to send
+STATEMENT: Encoding shall reject a physical value outside the range the DBC defines for its signal, report it, and leave the payload unchanged.
+RATIONALE: A sender must not put on the bus a value that the receiver is required to reject (SW_CODEC_003). Reporting it shows the error where it starts.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CODEC_005
+STATUS: Draft
+TAGS: codec, derived
+TITLE: Unused bits and E2E fields
+STATEMENT: Encoding shall set every payload bit that no signal uses to 0, and shall leave the bits of the alive counter and the CRC unchanged.
+RATIONALE: The E2E layer writes the alive counter and the CRC after encoding (ADR 0007). Fixed unused bits make the payload, and so the CRC, depend only on the signal values.
+VERIFICATION: Test
+
+[REQUIREMENT]
+UID: SW_CODEC_006
+STATUS: Draft
+TAGS: codec
+TITLE: Message identifiers
+STATEMENT: The codec shall provide the identifier of every message as the DBC defines it.
+RATIONALE: Received frames are passed to the right E2E receiver and decoder by identifier. Taking the identifier from the DBC means no other code repeats it.
+VERIFICATION: Test, Inspection
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS_MON_001
+
+[REQUIREMENT]
+UID: SW_CODEC_007
+STATUS: Draft
+TAGS: codec, derived
+TITLE: No memory allocation
+STATEMENT: The codec shall not allocate memory.
+RATIONALE: Encoding and decoding run in every cycle, after initialisation (ADR 0005).
+VERIFICATION: Test
